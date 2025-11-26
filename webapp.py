@@ -136,7 +136,7 @@ with col1:
     # Usar a função genérica
     cria_grafico_barras(
         df_municipios,
-        titulo="Top 10 Municípios por Requisições",
+        titulo="🏙️ Top 10 Municípios por Requisições",
         coluna_categoria='MUNICIPIO_UF',
         coluna_valor='total_requisicoes',
         titulo_x='Total de Requisições',
@@ -150,11 +150,11 @@ with col2:
     # Usar a função genérica
     cria_grafico_barras(
         df_pais,
-        titulo="Top 10 Municípios por Requisições",
-        coluna_categoria='MUNICIPIO_UF',
-        coluna_valor='total_requisicoes',
+        titulo="🗺️ Top 10 Países por Requisições",
+        coluna_categoria='PAIS',
+        coluna_valor='total_pais',
         titulo_x='Total de Requisições',
-        titulo_y='Município - UF',
+        titulo_y='País de Origem',
         esquema_cores='blues',
         altura=500
     )
