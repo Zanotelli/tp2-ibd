@@ -146,7 +146,6 @@ with col1:
     )
 with col2:
     df_pais = fetch(sql_req_pais, conn)
-    df_pais['MUNICIPIO_UF'] = df_pais['MUNICIPIO_REQUERENTE'] + ' - ' + df_pais['UF_REQUERENTE']
 
     # Usar a função genérica
     cria_grafico_barras(
