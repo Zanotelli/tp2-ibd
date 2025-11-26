@@ -61,6 +61,70 @@ def cria_grafico_barras(df, titulo, coluna_categoria, coluna_valor,
     return df
 
 
+def cria_grafico_linhas_ano(sql_req_ano, conn, titulo="Evolução de Requisições por Ano"):
+
+    df = fetch(sql_req_ano, conn)
+    
+    # Ordenar por ano para garantir a sequência temporal correta
+    df = df.sort_values('ANO_PRODUCAO_INICIAL')
+    
+    st.subheader(titulo)
+    
+    # Criar gráfico de linhas
+    line_chart = alt.Chart(df).mark_line(
+        point=True,  # Adiciona pontos em cada dado
+        strokeWidth=3,
+        color='#1f77b4'
+    ).encode(
+        x=alt.X('ANO_PRODUCAO_INICIAL:N', 
+                title='Ano de Produção Inicial',
+                axis=alt.Axis(labelAngle=0)),
+        y=alt.Y('total_ano:Q', 
+                title='Total de Requisições',
+                axis=alt.Axis(grid=True)),
+        tooltip=['ANO_PRODUCAO_INICIAL', 'total_ano']
+    ).properties(
+        height=400,
+        title=titulo
+    )
+    
+    # Adicionar área sob a linha (opcional)
+    area_chart = alt.Chart(df).mark_area(
+        opacity=0.3,
+        color='#1f77b4'
+    ).encode(
+        x='ANO_PRODUCAO_INICIAL:N',
+        y='total_ano:Q'
+    )
+    
+    # Combinar linha e área
+    chart = (area_chart + line_chart).configure_axis(
+        labelFontSize=12,
+        titleFontSize=14
+    ).configure_title(
+        fontSize=16
+    )
+    
+    st.altair_chart(chart, use_container_width=True)
+    
+    # Estatísticas
+    col1, col2, col3, col4 = st.columns(4)
+    with col1:
+        st.metric("Total de Anos", len(df))
+    with col2:
+        st.metric("Ano com Mais Requisições", 
+                 f"{df.loc[df['total_ano'].idxmax(), 'ANO_PRODUCAO_INICIAL']}",
+                 f"{df['total_ano'].max()}")
+    with col3:
+        st.metric("Ano com Menos Requisições", 
+                 f"{df.loc[df['total_ano'].idxmin(), 'ANO_PRODUCAO_INICIAL']}",
+                 f"{df['total_ano'].min()}")
+    with col4:
+        crescimento = ((df['total_ano'].iloc[-1] - df['total_ano'].iloc[0]) / df['total_ano'].iloc[0] * 100) if len(df) > 1 else 0
+        st.metric("Crescimento Total", f"{crescimento:.1f}%")
+    
+    return df
+
 #-------------------------------------------------------------
 st.set_page_config(
     page_title="Dados Ancine",
@@ -145,6 +209,9 @@ cria_grafico_barras(
     esquema_cores='reds',
     altura=500
 )
+
+#---
+df_anos = cria_grafico_linhas_ano(sql_req_ano, conn)
 
 
 conn.close()
