@@ -200,7 +200,7 @@ GROUP BY o.ANO_PRODUCAO_INICIAL
 ORDER BY total_ano DESC;
 """
 
-st.title("Visualização de Dados de Requisições de obras não publicitárias - Ancice")
+st.title("Visualização de Dados de Requisições de obras não publicitárias - Ancine")
 
 # Mostrar informação do filtro ativo
 if ano_filtro.strip():
