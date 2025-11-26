@@ -136,7 +136,8 @@ conn = sqlite3.connect('ancine.db')
 
 
 sql3 = """
-SELECT r.CRT, o.TITULO_ORIGINAL as "Título no Brasil", r.SITUACAO_CRT as "Situação"
+SELECT r.CRT, o.TITULO_ORIGINAL as "Título no Brasil", r.SITUACAO_CRT as "Situação",
+r.DATA_REQUERIMENTO_CRT as "Data da requisição"
 FROM Requisicao r
 JOIN Obras o ON r.CRT = o.CRT
 LIMIT 50;
