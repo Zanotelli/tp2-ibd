@@ -139,7 +139,7 @@ st.sidebar.header("🔍 Filtros")
 
 # Input para digitar o ano
 ano_filtro = st.sidebar.text_input(
-    "Filtrar por ano:",
+    "Filtrar por ano de requisição:",
     placeholder="Ex: 2023, 2022, 2021",
     help="Digite um ou mais anos separados por vírgula"
 )
@@ -200,7 +200,7 @@ GROUP BY o.ANO_PRODUCAO_INICIAL
 ORDER BY total_ano DESC;
 """
 
-st.title("Visualização de Dados do Banco SQLite")
+st.title("Visualização de Dados de Requisições de obras não publicitárias - Ancice")
 
 # Mostrar informação do filtro ativo
 if ano_filtro.strip():
