@@ -134,14 +134,45 @@ st.set_page_config(
 
 conn = sqlite3.connect('ancine.db')
 
+# ========== NOVO: FILTRO DE ANO ==========
+st.sidebar.header("🔍 Filtros")
 
-sql3 = """
+# Input para digitar o ano
+ano_filtro = st.sidebar.text_input(
+    "Filtrar por ano:",
+    placeholder="Ex: 2023, 2022, 2021",
+    help="Digite um ou mais anos separados por vírgula"
+)
+
+# Construir a query base
+sql3_base = """
 SELECT r.CRT, o.TITULO_ORIGINAL as "Título no Brasil", r.SITUACAO_CRT as "Situação",
 r.DATA_REQUERIMENTO_CRT as "Data da requisição"
 FROM Requisicao r
 JOIN Obras o ON r.CRT = o.CRT
-LIMIT 50;
 """
+
+# Aplicar filtro se ano foi digitado
+if ano_filtro.strip():
+    # Limpar e separar os anos
+    anos = [ano.strip() for ano in ano_filtro.split(',') if ano.strip()]
+    
+    if anos:
+        # Criar condições WHERE para cada ano
+        condicoes = []
+        for ano in anos:
+            condicoes.append(f"r.DATA_REQUERIMENTO_CRT LIKE '%{ano}%'")
+        
+        where_clause = " WHERE " + " OR ".join(condicoes)
+        sql3 = sql3_base + where_clause + " LIMIT 50;"
+        
+        st.sidebar.success(f"Filtrando por ano(s): {', '.join(anos)}")
+    else:
+        sql3 = sql3_base + " LIMIT 50;"
+else:
+    sql3 = sql3_base + " LIMIT 50;"
+
+# ========== FIM DO NOVO FILTRO ==========
 
 sql_req_municipio = """
 SELECT req.MUNICIPIO_REQUERENTE, req.UF_REQUERENTE, COUNT(*) AS total_requisicoes
@@ -171,6 +202,11 @@ ORDER BY total_ano DESC;
 
 st.title("Visualização de Dados do Banco SQLite")
 
+# Mostrar informação do filtro ativo
+if ano_filtro.strip():
+    anos = [ano.strip() for ano in ano_filtro.split(',') if ano.strip()]
+    if anos:
+        st.info(f"📅 **Filtro ativo:** Mostrando requisições dos anos {', '.join(anos)}")
 
 exibir_tabela(sql3)
 
@@ -203,6 +239,5 @@ with col2:
 
 #---
 df_anos = cria_grafico_linhas_ano(sql_req_ano, conn)
-
 
 conn.close()
