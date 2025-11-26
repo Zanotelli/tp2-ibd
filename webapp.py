@@ -128,7 +128,8 @@ def cria_grafico_linhas_ano(sql_req_ano, conn, titulo="Evolução de Requisiçõ
 #-------------------------------------------------------------
 st.set_page_config(
     page_title="Dados Ancine",
-    page_icon="🎥"
+    page_icon="🎥",
+    layout="wide"
 )
 
 conn = sqlite3.connect('ancine.db')
