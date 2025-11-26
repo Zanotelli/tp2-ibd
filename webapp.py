@@ -36,11 +36,11 @@ def cria_grafico_barras(df, titulo, coluna_categoria, coluna_valor,
     st.subheader(titulo)
     
     chart = alt.Chart(df).mark_bar().encode(
-        x=alt.X(f'{coluna_categoria}:Q', 
-                title=titulo_y,
+        x=alt.X(f'{coluna_valor}:Q', 
+                title=titulo_x,
                 axis=alt.Axis(labelAngle=0)),
-        y=alt.Y(f'{coluna_valor}:N', 
-                title= titulo_x,
+        y=alt.Y(f'{coluna_categoria}:N', 
+                title=titulo_y,
                 sort='-x'),  # Ordenar por valor decrescente
         color=alt.Color(f'{coluna_valor}:Q',
                        scale=alt.Scale(scheme=esquema_cores),
