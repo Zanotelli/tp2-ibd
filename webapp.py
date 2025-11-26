@@ -115,7 +115,6 @@ LIMIT 10;
 st.title("Visualização de Dados do Banco SQLite")
 exibir_tabela(sql1)
 exibir_tabela(sql3)
-exibir_tabela(sql4)
 cria_tabela_barras(sql9)
 
 conn.close()
