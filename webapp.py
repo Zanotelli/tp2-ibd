@@ -26,32 +26,29 @@ def exibir_tabela(query):
     # Opcional: mostrar estatísticas básicas
     st.write(f"Total de registros: {len(df)}")
 
-
-
-def cria_tabela_barras(sql):
-    st.title("📊 Requisições por Município")
+def cria_grafico_barras(df, titulo, coluna_categoria, coluna_valor, 
+                       titulo_x='Total', titulo_y='Categoria', 
+                       esquema_cores='blues', limite=None, altura=500):
     
-    df = fetch(sql, conn)
+    if limite and len(df) > limite:
+        df = df.head(limite)
     
-    df['MUNICIPIO_UF'] = df['MUNICIPIO_REQUERENTE'] + ' - ' + df['UF_REQUERENTE']
-    
-    st.subheader("Top 10 Municípios com Mais Requisições")
+    st.subheader(titulo)
     
     chart = alt.Chart(df).mark_bar().encode(
-        x=alt.X('total_requisicoes:Q', 
-                title='Total de Requisições',
+        x=alt.X(f'{coluna_valor}:Q', 
+                title=titulo_x,
                 axis=alt.Axis(labelAngle=0)),
-        y=alt.Y('MUNICIPIO_UF:N', 
-                title='Município - UF',
+        y=alt.Y(f'{coluna_categoria}:N', 
+                title=titulo_y,
                 sort='-x'),  # Ordenar por valor decrescente
-        color=alt.Color('total_requisicoes:Q',
-                       scale=alt.Scale(scheme='blues'),
-                       legend=alt.Legend(title="Total Requisições")),
-        tooltip=['MUNICIPIO_REQUERENTE', 'UF_REQUERENTE', 'total_requisicoes']
+        color=alt.Color(f'{coluna_valor}:Q',
+                       scale=alt.Scale(scheme=esquema_cores),
+                       legend=alt.Legend(title=titulo_x)),
+        tooltip=[coluna_categoria, coluna_valor]
     ).properties(
-        width=800,
-        height=500,
-        title='Top 10 Municípios por Número de Requisições'
+        height=altura,
+        title=titulo
     ).configure_axis(
         labelFontSize=12,
         titleFontSize=14
@@ -61,14 +58,16 @@ def cria_tabela_barras(sql):
     
     st.altair_chart(chart, use_container_width=True)
     
-    # Estatísticas rápidas
+    # Opcional: exibir estatísticas
     col1, col2, col3 = st.columns(3)
     with col1:
-        st.metric("Total de Municípios", len(df))
+        st.metric("Total de Itens", len(df))
     with col2:
-        st.metric("Máximo de Requisições", df['total_requisicoes'].max())
+        st.metric("Valor Máximo", df[coluna_valor].max())
     with col3:
-        st.metric("Mínimo de Requisições", df['total_requisicoes'].min())
+        st.metric("Valor Mínimo", df[coluna_valor].min())
+    return df
+
 
 #-------------------------------------------------------------
 st.set_page_config(
@@ -92,16 +91,7 @@ JOIN Obras o ON r.CRT = o.CRT
 LIMIT 50;
 """
 
-sql4 = """
-SELECT r.id, r.nome_requerente, COUNT(req.CRT) AS total_requisicoes
-FROM Requerente r
-JOIN Requisicao req ON r.cnpj = req.CNPJ_REQUERENTE
-GROUP BY r.id, r.nome_requerente
-ORDER BY total_requisicoes DESC
-LIMIT 50;
-"""
-
-sql9 = """
+sql_req_municipio = """
 SELECT req.MUNICIPIO_REQUERENTE, req.UF_REQUERENTE, COUNT(*) AS total_requisicoes
 FROM Requisicao r
 JOIN Requerentes req ON r.CNPJ_REQUERENTE = req.CNPJ_REQUERENTE
@@ -110,11 +100,65 @@ ORDER BY total_requisicoes DESC
 LIMIT 10;
 """
 
+sql_req_pais = """
+SELECT o.PAIS, COUNT(*) AS total_pais
+FROM Requisicao r
+JOIN Obras o ON r.CRT = o.CRT
+GROUP BY o.PAIS
+ORDER BY total_pais DESC
+LIMIT 10;
+"""
 
-# Interface do Streamlit
+sql_req_ano = """
+SELECT o.ANO_PRODUCAO_INICIAL, COUNT(*) AS total_ano
+FROM Requisicao r
+JOIN Obras o ON r.CRT = o.CRT
+GROUP BY o.ANO_PRODUCAO_INICIAL
+ORDER BY total_ano DESC;
+"""
+
 st.title("Visualização de Dados do Banco SQLite")
-exibir_tabela(sql1)
-exibir_tabela(sql3)
-cria_tabela_barras(sql9)
+
+
+col1, col2 = st.columns(2)
+
+with col1:
+    exibir_tabela(sql1)
+with col2:
+    exibir_tabela(sql3)
+
+
+col1, col2 = st.columns(2)
+with col1:
+    df_municipios = fetch(sql_req_municipio, conn)
+    df_municipios['MUNICIPIO_UF'] = df_municipios['MUNICIPIO_REQUERENTE'] + ' - ' + df_municipios['UF_REQUERENTE']
+
+    # Usar a função genérica
+    cria_grafico_barras(
+        df_municipios,
+        titulo="Top 10 Municípios por Requisições",
+        coluna_categoria='MUNICIPIO_UF',
+        coluna_valor='total_requisicoes',
+        titulo_x='Total de Requisições',
+        titulo_y='Município - UF',
+        esquema_cores='blues',
+        altura=500
+    )
+with col2:
+    df_pais = fetch(sql_req_pais, conn)
+    df_pais['MUNICIPIO_UF'] = df_pais['MUNICIPIO_REQUERENTE'] + ' - ' + df_pais['UF_REQUERENTE']
+
+    # Usar a função genérica
+    cria_grafico_barras(
+        df_pais,
+        titulo="Top 10 Municípios por Requisições",
+        coluna_categoria='MUNICIPIO_UF',
+        coluna_valor='total_requisicoes',
+        titulo_x='Total de Requisições',
+        titulo_y='Município - UF',
+        esquema_cores='blues',
+        altura=500
+    )
+
 
 conn.close()
