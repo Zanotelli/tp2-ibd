@@ -3,7 +3,6 @@ import pandas as pd
 import sqlite3
 import altair as alt
 
-
 def fetch(query, conn, formatted=True):
     # execute the query and fetch all rows
     cur = conn.cursor()
@@ -15,6 +14,29 @@ def fetch(query, conn, formatted=True):
 
     # return a dataframe with column names
     return pd.DataFrame(rs, columns=columns) if formatted else rs
+
+def aplicar_filtro_ano(query_base, ano_filtro):
+    """
+    Aplica filtro de ano às queries, verificando DATA_REQUERIMENTO_CRT e TITULO_ORIGINAL
+    """
+    if not ano_filtro:
+        return query_base
+    
+    # Remove LIMIT se existir para aplicar WHERE corretamente
+    query_sem_limit = query_base.split('LIMIT')[0] if 'LIMIT' in query_base else query_base
+    
+    # Adiciona WHERE ou AND dependendo da query
+    if 'WHERE' in query_sem_limit.upper():
+        where_clause = f"AND (strftime('%Y', r.DATA_REQUERIMENTO_CRT) = '{ano_filtro}' OR o.TITULO_ORIGINAL LIKE '%{ano_filtro}%')"
+    else:
+        where_clause = f"WHERE (strftime('%Y', r.DATA_REQUERIMENTO_CRT) = '{ano_filtro}' OR o.TITULO_ORIGINAL LIKE '%{ano_filtro}%')"
+    
+    # Re-adiciona LIMIT se existia originalmente
+    if 'LIMIT' in query_base:
+        limit_clause = 'LIMIT' + query_base.split('LIMIT')[1]
+        return query_sem_limit + ' ' + where_clause + ' ' + limit_clause
+    else:
+        return query_sem_limit + ' ' + where_clause
 
 def exibir_tabela(query):
     # Executar a query e carregar no DataFrame
@@ -59,7 +81,6 @@ def cria_grafico_barras(df, titulo, coluna_categoria, coluna_valor,
     st.altair_chart(chart, use_container_width=True)
     
     return df
-
 
 def cria_grafico_linhas_ano(sql_req_ano, conn, titulo="Evolução de Requisições por Ano"):
 
@@ -134,110 +155,97 @@ st.set_page_config(
 
 conn = sqlite3.connect('ancine.db')
 
-# ========== NOVO: FILTRO DE ANO ==========
-st.sidebar.header("🔍 Filtros")
-
-# Input para digitar o ano
-ano_filtro = st.sidebar.text_input(
-    "Filtrar por ano:",
-    placeholder="Ex: 2023, 2022, 2021",
-    help="Digite um ou mais anos separados por vírgula"
-)
-
-# Construir a query base
+# QUERIES BASE (sem filtro)
 sql3_base = """
-SELECT r.CRT, o.TITULO_ORIGINAL as "Título no Brasil", r.SITUACAO_CRT as "Situação",
+SELECT r.CRT, o.TITULO_ORIGINAL as "Título", r.SITUACAO_CRT as "Situação",
 r.DATA_REQUERIMENTO_CRT as "Data da requisição"
 FROM Requisicao r
 JOIN Obras o ON r.CRT = o.CRT
 """
 
-# Aplicar filtro se ano foi digitado
-if ano_filtro.strip():
-    # Limpar e separar os anos
-    anos = [ano.strip() for ano in ano_filtro.split(',') if ano.strip()]
-    
-    if anos:
-        # Criar condições WHERE para cada ano
-        condicoes = []
-        for ano in anos:
-            condicoes.append(f"r.DATA_REQUERIMENTO_CRT LIKE '%{ano}%'")
-        
-        where_clause = " WHERE " + " OR ".join(condicoes)
-        sql3 = sql3_base + where_clause + " LIMIT 50;"
-        
-        st.sidebar.success(f"Filtrando por ano(s): {', '.join(anos)}")
-    else:
-        sql3 = sql3_base + " LIMIT 50;"
-else:
-    sql3 = sql3_base + " LIMIT 50;"
-
-# ========== FIM DO NOVO FILTRO ==========
-
-sql_req_municipio = """
+sql_req_municipio_base = """
 SELECT req.MUNICIPIO_REQUERENTE, req.UF_REQUERENTE, COUNT(*) AS total_requisicoes
 FROM Requisicao r
 JOIN Requerentes req ON r.CNPJ_REQUERENTE = req.CNPJ_REQUERENTE
 GROUP BY req.MUNICIPIO_REQUERENTE, req.UF_REQUERENTE
 ORDER BY total_requisicoes DESC
-LIMIT 10;
 """
 
-sql_req_pais = """
+sql_req_pais_base = """
 SELECT o.PAIS, COUNT(*) AS total_pais
 FROM Requisicao r
 JOIN Obras o ON r.CRT = o.CRT
 GROUP BY o.PAIS
 ORDER BY total_pais DESC
-LIMIT 10;
 """
 
-sql_req_ano = """
+sql_req_ano_base = """
 SELECT o.ANO_PRODUCAO_INICIAL, COUNT(*) AS total_ano
 FROM Requisicao r
 JOIN Obras o ON r.CRT = o.CRT
 GROUP BY o.ANO_PRODUCAO_INICIAL
-ORDER BY total_ano DESC;
+ORDER BY total_ano DESC
 """
 
 st.title("Visualização de Dados do Banco SQLite")
 
-# Mostrar informação do filtro ativo
-if ano_filtro.strip():
-    anos = [ano.strip() for ano in ano_filtro.split(',') if ano.strip()]
-    if anos:
-        st.info(f"📅 **Filtro ativo:** Mostrando requisições dos anos {', '.join(anos)}")
+# FILTRO DE ANO - Adicionado aqui
+st.sidebar.header("🔍 Filtros")
+ano_filtro = st.sidebar.text_input(
+    "Filtrar por Ano:",
+    placeholder="Ex: 2023, 2022...",
+    help="Filtra por DATA_REQUERIMENTO_CRT ou TITULO_ORIGINAL contendo o ano"
+)
 
-exibir_tabela(sql3)
+# Aplicar filtro às queries
+sql3_filtrado = aplicar_filtro_ano(sql3_base, ano_filtro) + " LIMIT 50"
+sql_req_municipio_filtrado = aplicar_filtro_ano(sql_req_municipio_base, ano_filtro) + " LIMIT 10"
+sql_req_pais_filtrado = aplicar_filtro_ano(sql_req_pais_base, ano_filtro) + " LIMIT 10"
+sql_req_ano_filtrado = aplicar_filtro_ano(sql_req_ano_base, ano_filtro)
+
+# Indicador de filtro ativo
+if ano_filtro:
+    st.sidebar.success(f"✅ Filtro ativo: Ano {ano_filtro}")
+    st.sidebar.info(f"Filtrando por:\n- DATA_REQUERIMENTO_CRT = {ano_filtro}\n- TITULO_ORIGINAL contém '{ano_filtro}'")
+
+# EXIBIÇÃO DOS DADOS FILTRADOS
+exibir_tabela(sql3_filtrado)
 
 col1, col2 = st.columns(2)
 with col1:
-    df_municipios = fetch(sql_req_municipio, conn)
-    df_municipios['MUNICIPIO_UF'] = df_municipios['MUNICIPIO_REQUERENTE'] + ' - ' + df_municipios['UF_REQUERENTE']
-    cria_grafico_barras(
-        df_municipios,
-        titulo="🏙️ Top 10 Municípios por Requisições",
-        coluna_categoria='MUNICIPIO_UF',
-        coluna_valor='total_requisicoes',
-        titulo_x='Total de Requisições',
-        titulo_y='Município - UF',
-        esquema_cores='blues',
-        altura=500
-    )
-with col2:
-    df_pais = fetch(sql_req_pais, conn)
-    cria_grafico_barras(
-        df_pais,
-        titulo="🗺️ Top 10 Países por Requisições",
-        coluna_categoria='PAIS',
-        coluna_valor='total_pais',
-        titulo_x='Total de Requisições',
-        titulo_y='País de Origem',
-        esquema_cores='reds',
-        altura=500
-    )
+    df_municipios = fetch(sql_req_municipio_filtrado, conn)
+    if not df_municipios.empty:
+        df_municipios['MUNICIPIO_UF'] = df_municipios['MUNICIPIO_REQUERENTE'] + ' - ' + df_municipios['UF_REQUERENTE']
+        cria_grafico_barras(
+            df_municipios,
+            titulo="🏙️ Top 10 Municípios por Requisições" + (f" ({ano_filtro})" if ano_filtro else ""),
+            coluna_categoria='MUNICIPIO_UF',
+            coluna_valor='total_requisicoes',
+            titulo_x='Total de Requisições',
+            titulo_y='Município - UF',
+            esquema_cores='blues',
+            altura=500
+        )
+    else:
+        st.warning("Nenhum dado encontrado para o filtro aplicado.")
 
-#---
-df_anos = cria_grafico_linhas_ano(sql_req_ano, conn)
+with col2:
+    df_pais = fetch(sql_req_pais_filtrado, conn)
+    if not df_pais.empty:
+        cria_grafico_barras(
+            df_pais,
+            titulo="🗺️ Top 10 Países por Requisições" + (f" ({ano_filtro})" if ano_filtro else ""),
+            coluna_categoria='PAIS',
+            coluna_valor='total_pais',
+            titulo_x='Total de Requisições',
+            titulo_y='País de Origem',
+            esquema_cores='reds',
+            altura=500
+        )
+    else:
+        st.warning("Nenhum dado encontrado para o filtro aplicado.")
+
+# Gráfico de linhas
+df_anos = cria_grafico_linhas_ano(sql_req_ano_filtrado, conn)
 
 conn.close()
