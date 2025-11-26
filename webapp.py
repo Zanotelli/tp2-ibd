@@ -16,22 +16,15 @@ def fetch(query, conn, formatted=True):
     return pd.DataFrame(rs, columns=columns) if formatted else rs
 
 def exibir_tabela(query):
+    # Executar a query e carregar no DataFrame
+    df = fetch(query, conn)
     
-    try:
-        # Executar a query e carregar no DataFrame
-        df = fetch(query, conn)
+    # Exibir a tabela no Streamlit
+    st.dataframe(df)
+    
+    # Opcional: mostrar estatísticas básicas
+    st.write(f"Total de registros: {len(df)}")
         
-        # Exibir a tabela no Streamlit
-        st.dataframe(df)
-        
-        # Opcional: mostrar estatísticas básicas
-        st.write(f"Total de registros: {len(df)}")
-        
-    except Exception as e:
-        st.error(f"Erro ao executar a query: {e}")
-    finally:
-        conn.close()
-
 #-------------------------------------------------------------
 st.set_page_config(
     page_title="Dados Ancine",
@@ -69,3 +62,8 @@ st.title("Visualização de Dados do Banco SQLite")
 exibir_tabela(sql1)
 exibir_tabela(sql3)
 exibir_tabela(sql4)
+
+
+
+
+conn.close()
