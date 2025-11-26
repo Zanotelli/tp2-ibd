@@ -134,15 +134,9 @@ st.set_page_config(
 
 conn = sqlite3.connect('ancine.db')
 
-sql1 = """
-SELECT TITULO_ORIGINAL, PAIS
-FROM Obras
-WHERE ANO_PRODUCAO_INICIAL = 2005
-LIMIT 50;
-"""
 
 sql3 = """
-SELECT r.CRT, o.TITULO_BRASIL, r.SITUACAO_CRT
+SELECT r.CRT, o.TITULO_ORIGINAL as "Título no Brasil", r.SITUACAO_CRT as "Situação"
 FROM Requisicao r
 JOIN Obras o ON r.CRT = o.CRT
 LIMIT 50;
@@ -177,12 +171,7 @@ ORDER BY total_ano DESC;
 st.title("Visualização de Dados do Banco SQLite")
 
 
-col1, col2 = st.columns(2)
-
-with col1:
-    exibir_tabela(sql1)
-with col2:
-    exibir_tabela(sql3)
+exibir_tabela(sql3)
 
 col1, col2 = st.columns(2)
 with col1:
