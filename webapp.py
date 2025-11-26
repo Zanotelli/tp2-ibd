@@ -41,14 +41,31 @@ st.set_page_config(
 conn = sqlite3.connect('ancine.db')
 
 sql1 = """
-SELECT CRT, CNPJ_REQUERENTE, SITUACAO_CRT, DATA_REQUERIMENTO_CRT
-FROM Requisicao
-WHERE SITUACAO_CRT = 'IRREGULAR'
+SELECT TITULO_ORIGINAL, PAIS
+FROM Obras
+WHERE ANO_PRODUCAO_INICIAL = 2005
 LIMIT 50;
 """
 
+sql3 = """
+SELECT r.CRT, o.TITULO_BRASIL, r.SITUACAO_CRT
+FROM Requisicao r
+JOIN Obras o ON r.CRT = o.CRT
+LIMIT 50;
+"""
+
+sql4 = """
+SELECT r.id, r.nome_requerente, COUNT(req.CRT) AS total_requisicoes
+FROM Requerente r
+JOIN Requisicao req ON r.cnpj = req.CNPJ_REQUERENTE
+GROUP BY r.id, r.nome_requerente
+ORDER BY total_requisicoes DESC
+LIMIT 50;
+"""
 
 
 # Interface do Streamlit
 st.title("Visualização de Dados do Banco SQLite")
 exibir_tabela(sql1)
+exibir_tabela(sql3)
+exibir_tabela(sql4)
