@@ -127,37 +127,32 @@ with col1:
 with col2:
     exibir_tabela(sql3)
 
+#---
+df_municipios = fetch(sql_req_municipio, conn)
+df_municipios['MUNICIPIO_UF'] = df_municipios['MUNICIPIO_REQUERENTE'] + ' - ' + df_municipios['UF_REQUERENTE']
+cria_grafico_barras(
+    df_municipios,
+    titulo="🏙️ Top 10 Municípios por Requisições",
+    coluna_categoria='MUNICIPIO_UF',
+    coluna_valor='total_requisicoes',
+    titulo_x='Total de Requisições',
+    titulo_y='Município - UF',
+    esquema_cores='blues',
+    altura=500
+)
 
-col1, col2 = st.columns(2)
-with col1:
-    df_municipios = fetch(sql_req_municipio, conn)
-    df_municipios['MUNICIPIO_UF'] = df_municipios['MUNICIPIO_REQUERENTE'] + ' - ' + df_municipios['UF_REQUERENTE']
-
-    # Usar a função genérica
-    cria_grafico_barras(
-        df_municipios,
-        titulo="🏙️ Top 10 Municípios por Requisições",
-        coluna_categoria='MUNICIPIO_UF',
-        coluna_valor='total_requisicoes',
-        titulo_x='Total de Requisições',
-        titulo_y='Município - UF',
-        esquema_cores='blues',
-        altura=500
-    )
-with col2:
-    df_pais = fetch(sql_req_pais, conn)
-
-    # Usar a função genérica
-    cria_grafico_barras(
-        df_pais,
-        titulo="🗺️ Top 10 Países por Requisições",
-        coluna_categoria='PAIS',
-        coluna_valor='total_pais',
-        titulo_x='Total de Requisições',
-        titulo_y='País de Origem',
-        esquema_cores='blues',
-        altura=500
-    )
+#---
+df_pais = fetch(sql_req_pais, conn)
+cria_grafico_barras(
+    df_pais,
+    titulo="🗺️ Top 10 Países por Requisições",
+    coluna_categoria='PAIS',
+    coluna_valor='total_pais',
+    titulo_x='Total de Requisições',
+    titulo_y='País de Origem',
+    esquema_cores='reds',
+    altura=500
+)
 
 
 conn.close()
