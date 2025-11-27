@@ -200,7 +200,7 @@ GROUP BY o.ANO_PRODUCAO_INICIAL
 ORDER BY total_ano DESC;
 """
 
-st.title("Visualização de Dados de Requisições de obras não publicitárias - Ancine")
+st.title("Visualização de Dados de Requisições de obras não publicitárias - Ancine 🎥")
 
 # Mostrar informação do filtro ativo
 if ano_filtro.strip():
@@ -209,6 +209,12 @@ if ano_filtro.strip():
         st.info(f"📅 **Filtro ativo:** Mostrando requisições dos anos {', '.join(anos)}")
 
 exibir_tabela(sql3)
+
+df_anos = cria_grafico_linhas_ano(sql_req_ano, conn)
+
+
+
+st.header("📊 Estatísticas gerais")
 
 col1, col2 = st.columns(2)
 with col1:
@@ -238,6 +244,5 @@ with col2:
     )
 
 #---
-df_anos = cria_grafico_linhas_ano(sql_req_ano, conn)
 
 conn.close()
