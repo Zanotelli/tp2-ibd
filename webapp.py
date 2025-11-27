@@ -154,7 +154,7 @@ ano_filtro = st.sidebar.text_input(
 
 # Construir a query base
 sql3_base = """
-SELECT r.CRT, o.TITULO_ORIGINAL as "Título no Brasil", r.SITUACAO_CRT as "Situação",
+SELECT r.CRT, o.TITULO_ORIGINAL as "Título", o.PAIS as "País de origem", r.SITUACAO_CRT as "Situação",
 r.DATA_REQUERIMENTO_CRT as "Data da requisição"
 FROM Requisicao r
 JOIN Obras o ON r.CRT = o.CRT
