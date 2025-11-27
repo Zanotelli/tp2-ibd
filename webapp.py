@@ -17,13 +17,22 @@ def fetch(query, conn, formatted=True):
     return pd.DataFrame(rs, columns=columns) if formatted else rs
 
 def exibir_tabela(query):
-    # Executar a query e carregar no DataFrame
     df = fetch(query, conn)
+
+    column_config = {}
+    for col in df.columns:
+        column_config[col] = st.column_config.Column(
+            col,
+            help=f"Pesquisar em {col}",
+        )
     
-    # Exibir a tabela no Streamlit
-    st.dataframe(df)
+    st.dataframe(
+        df,
+        use_container_width=True,
+        column_config=column_config,
+        hide_index=True
+    )
     
-    # Opcional: mostrar estatísticas básicas
     st.write(f"Total de registros: {len(df)}")
 
 def cria_grafico_barras(df, titulo, coluna_categoria, coluna_valor, 
