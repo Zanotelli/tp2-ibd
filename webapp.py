@@ -60,7 +60,6 @@ def cria_grafico_barras(df, titulo, coluna_categoria, coluna_valor,
     
     return df
 
-
 def cria_grafico_linhas_ano(sql_req_ano, conn, titulo="Evolução de Requisições por Ano"):
 
     df = fetch(sql_req_ano, conn)
@@ -152,19 +151,25 @@ FROM Requisicao r
 JOIN Obras o ON r.CRT = o.CRT
 """
 
+sql_req_ano = """
+SELECT o.ANO_PRODUCAO_INICIAL, COUNT(*) AS total_ano
+FROM Requisicao r
+JOIN Obras o ON r.CRT = o.CRT
+"""
+
 # Aplicar filtro se ano foi digitado
 if ano_filtro.strip():
     # Limpar e separar os anos
     anos = [ano.strip() for ano in ano_filtro.split(',') if ano.strip()]
     
     if anos:
-        # Criar condições WHERE para cada ano
         condicoes = []
         for ano in anos:
             condicoes.append(f"r.DATA_REQUERIMENTO_CRT LIKE '%{ano}%'")
         
         where_clause = " WHERE " + " OR ".join(condicoes)
         sql3 = sql3_base + where_clause + ";"
+        sql_req_ano = sql_req_ano + where_clause
         
         st.sidebar.success(f"Filtrando por ano(s): {', '.join(anos)}")
     else:
@@ -172,6 +177,7 @@ if ano_filtro.strip():
 else:
     sql3 = sql3_base + ";"
 
+sql_req_ano = sql_req_ano + "GROUP BY o.ANO_PRODUCAO_INICIAL ORDER BY total_ano DESC;"
 # ========== FIM DO NOVO FILTRO ==========
 
 sql_req_municipio = """
@@ -192,13 +198,6 @@ ORDER BY total_pais DESC
 LIMIT 10;
 """
 
-sql_req_ano = """
-SELECT o.ANO_PRODUCAO_INICIAL, COUNT(*) AS total_ano
-FROM Requisicao r
-JOIN Obras o ON r.CRT = o.CRT
-GROUP BY o.ANO_PRODUCAO_INICIAL
-ORDER BY total_ano DESC;
-"""
 
 st.title("Visualização de Dados de Requisições de obras não publicitárias - Ancine 🎥")
 
@@ -213,7 +212,7 @@ exibir_tabela(sql3)
 df_anos = cria_grafico_linhas_ano(sql_req_ano, conn)
 
 
-
+st.markdown("---")
 st.header("📊 Estatísticas gerais")
 
 col1, col2 = st.columns(2)
