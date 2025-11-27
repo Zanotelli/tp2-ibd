@@ -177,7 +177,7 @@ if ano_filtro.strip():
 else:
     sql3 = sql3_base + ";"
 
-sql_req_ano = sql_req_ano + "GROUP BY o.ANO_PRODUCAO_INICIAL ORDER BY total_ano DESC;"
+sql_req_ano = sql_req_ano + " GROUP BY o.ANO_PRODUCAO_INICIAL ORDER BY total_ano DESC;"
 # ========== FIM DO NOVO FILTRO ==========
 
 sql_req_municipio = """
